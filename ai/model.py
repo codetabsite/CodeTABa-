@@ -26,7 +26,7 @@ class CodeTabModel:
                 "Uygulamayı yeniden başlatın ve API key girin."
             )
         self.client = Groq(api_key=api_key)
-        self.model = "llama3-70b-8192"
+        self.model = "llama-3.3-70b-versatile"
         self.history = []
 
     def ask(self, question: str, max_tokens: int = 512) -> str:
