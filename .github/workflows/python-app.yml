@@ -1,0 +1,199 @@
+name: Build AppImage
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+
+  build-x86_64:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bağımlılıkları kur
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libxcb-xinerama0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xkb1 libxkbcommon-x11-0 \
+            libgl1-mesa-glx libegl1 wget
+
+      - name: Python paketlerini kur
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: PyInstaller ile derle
+        run: |
+          pyinstaller --onedir --windowed --name "CodeTab-AI" \
+            --add-data "assets:assets" main.py
+
+      - name: appimagetool indir
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: AppDir oluştur
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp -r dist/CodeTab-AI/* AppDir/usr/bin/
+
+          cat > AppDir/codetab-ai.desktop << 'EOF'
+          [Desktop Entry]
+          Name=CodeTab AI
+          Exec=CodeTab-AI
+          Icon=codetab-ai
+          Type=Application
+          Categories=Education;Development;
+          Terminal=false
+          EOF
+
+          cp AppDir/codetab-ai.desktop AppDir/usr/share/applications/
+          ln -sf usr/bin/CodeTab-AI AppDir/AppRun
+
+          if [ -f assets/icon.png ]; then
+            cp assets/icon.png AppDir/codetab-ai.png
+            cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png
+          else
+            python3 -c "
+          import struct, zlib
+          def png(path):
+            def c(t,d): return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+            s=256; row=b'\x00'+bytes([30,30,46]*s)
+            open(path,'wb').write(b'\x89PNG\r\n\x1a\n'+c(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+c(b'IDAT',zlib.compress(row*s))+c(b'IEND',b''))
+          png('AppDir/codetab-ai.png')
+          png('AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png')
+          "
+          fi
+
+      - name: AppImage paketle
+        run: ARCH=x86_64 appimagetool AppDir CodeTab-AI-x86_64.AppImage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodeTab-AI-x86_64
+          path: CodeTab-AI-x86_64.AppImage
+
+
+  build-aarch64:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: QEMU kur
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: aarch64 container içinde derle
+        uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: aarch64
+          distro: ubuntu22.04
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get update -qq
+            apt-get install -y \
+              python3 python3-pip \
+              libxcb-xinerama0 libxcb-icccm4 libxcb-image0 \
+              libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+              libxcb-shape0 libxcb-xkb1 libxkbcommon-x11-0 \
+              libgl1-mesa-glx libegl1 wget
+          run: |
+            cd ${{ github.workspace }}
+            pip3 install --upgrade pip
+            pip3 install -r requirements.txt pyinstaller
+
+            python3 -m PyInstaller --onedir --windowed --name "CodeTab-AI" \
+              --add-data "assets:assets" main.py
+
+            wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage \
+              -O /usr/local/bin/appimagetool
+            chmod +x /usr/local/bin/appimagetool
+
+            mkdir -p AppDir/usr/bin
+            mkdir -p AppDir/usr/share/applications
+            mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+            cp -r dist/CodeTab-AI/* AppDir/usr/bin/
+
+            cat > AppDir/codetab-ai.desktop << 'EOF'
+            [Desktop Entry]
+            Name=CodeTab AI
+            Exec=CodeTab-AI
+            Icon=codetab-ai
+            Type=Application
+            Categories=Education;Development;
+            Terminal=false
+            EOF
+
+            cp AppDir/codetab-ai.desktop AppDir/usr/share/applications/
+            ln -sf usr/bin/CodeTab-AI AppDir/AppRun
+
+            if [ -f assets/icon.png ]; then
+              cp assets/icon.png AppDir/codetab-ai.png
+              cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png
+            else
+              python3 -c "
+            import struct, zlib
+            def png(path):
+              def c(t,d): return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+              s=256; row=b'\x00'+bytes([30,30,46]*s)
+              open(path,'wb').write(b'\x89PNG\r\n\x1a\n'+c(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+c(b'IDAT',zlib.compress(row*s))+c(b'IEND',b''))
+            png('AppDir/codetab-ai.png')
+            png('AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png')
+            "
+            fi
+
+            ARCH=aarch64 appimagetool AppDir CodeTab-AI-aarch64.AppImage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodeTab-AI-aarch64
+          path: CodeTab-AI-aarch64.AppImage
+
+
+  release:
+    needs: [build-x86_64, build-aarch64]
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: CodeTab-AI-x86_64
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: CodeTab-AI-aarch64
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: "CodeTab AI ${{ github.ref_name }}"
+          body: |
+            ## CodeTab AI ${{ github.ref_name }}
+
+            | Mimari | Dosya |
+            |--------|-------|
+            | x86_64 | `CodeTab-AI-x86_64.AppImage` |
+            | aarch64 | `CodeTab-AI-aarch64.AppImage` |
+
+            ```bash
+            chmod +x CodeTab-AI-*.AppImage
+            ./CodeTab-AI-*.AppImage
+            ```
+          files: |
+            CodeTab-AI-x86_64.AppImage
+            CodeTab-AI-aarch64.AppImage
