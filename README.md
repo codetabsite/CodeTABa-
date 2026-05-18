@@ -29,4 +29,4 @@ codetab-groq/
 └── ui/mainwindow.py ← PyQt5 arayüz
 ```
 
-*Teknofest 2025 — CodeTab AI* 🇹🇷
+*Teknofest 2026 — CodeTab AI* 
