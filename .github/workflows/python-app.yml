@@ -116,7 +116,7 @@ jobs:
           run: |
             cd ${{ github.workspace }}
             pip3 install --upgrade pip
-            pip3 install groq>=0.13.0 pyinstaller
+            pip3 install "groq>=0.13.0" pyinstaller
 
             python3 -m PyInstaller --onedir --windowed --name "CodeTab-AI" \
               --add-data "assets:assets" main.py
@@ -156,18 +156,20 @@ jobs:
           "
           fi
 
-      - name: appimagetool indir (aarch64)
+      # DÜZELTME: aarch64 binary yerine x86_64 appimagetool indir, ARCH=aarch64 ile cross-build yap
+      - name: appimagetool indir
         run: |
           sudo apt-get install -y libfuse2
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage \
-            -O /usr/local/bin/appimagetool-aarch64
-          chmod +x /usr/local/bin/appimagetool-aarch64
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
 
-      - name: AppImage paketle (host QEMU ile)
+      # DÜZELTME: qemu-aarch64-static ile aarch64 binary çalıştırmak yerine
+      # x86_64 appimagetool'u ARCH=aarch64 env değişkeniyle çalıştır
+      - name: AppImage paketle (aarch64)
         run: |
           ARCH=aarch64 APPIMAGE_EXTRACT_AND_RUN=1 \
-            qemu-aarch64-static /usr/local/bin/appimagetool-aarch64 \
-            AppDir CodeTab-AI-aarch64.AppImage
+            appimagetool AppDir CodeTab-AI-aarch64.AppImage
 
       - uses: actions/upload-artifact@v4
         with:
