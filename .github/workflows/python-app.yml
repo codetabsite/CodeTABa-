@@ -98,13 +98,12 @@ jobs:
         with:
           platforms: arm64
 
-      - name: aarch64 container içinde derle
+      - name: aarch64 container içinde derle (PyInstaller)
         uses: uraimo/run-on-arch-action@v2
         with:
           arch: aarch64
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
-          dockerRunArgs: --privileged
           install: |
             apt-get update -qq
             apt-get install -y \
@@ -113,58 +112,67 @@ jobs:
               libxcb-xinerama0 libxcb-icccm4 libxcb-image0 \
               libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
               libxcb-shape0 libxcb-xkb1 libxkbcommon-x11-0 \
-              libgl1-mesa-glx libegl1 wget libfuse2 file
+              libgl1-mesa-glx libegl1
           run: |
             cd ${{ github.workspace }}
             pip3 install --upgrade pip
-            pip3 install groq pyinstaller
+            pip3 install groq>=0.13.0 pyinstaller
 
             python3 -m PyInstaller --onedir --windowed --name "CodeTab-AI" \
               --add-data "assets:assets" main.py
 
-            wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage \
-              -O /usr/local/bin/appimagetool
-            chmod +x /usr/local/bin/appimagetool
+      - name: AppDir oluştur (host üzerinde)
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp -r dist/CodeTab-AI/* AppDir/usr/bin/
 
-            mkdir -p AppDir/usr/bin
-            mkdir -p AppDir/usr/share/applications
-            mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-            cp -r dist/CodeTab-AI/* AppDir/usr/bin/
+          cat > AppDir/codetab-ai.desktop << 'DESK'
+          [Desktop Entry]
+          Name=CodeTab AI
+          Exec=CodeTab-AI
+          Icon=codetab-ai
+          Type=Application
+          Categories=Education;Development;
+          Terminal=false
+          DESK
 
-            cat > AppDir/codetab-ai.desktop << 'DESK'
-            [Desktop Entry]
-            Name=CodeTab AI
-            Exec=CodeTab-AI
-            Icon=codetab-ai
-            Type=Application
-            Categories=Education;Development;
-            Terminal=false
-            DESK
+          cp AppDir/codetab-ai.desktop AppDir/usr/share/applications/
+          ln -sf usr/bin/CodeTab-AI AppDir/AppRun
 
-            cp AppDir/codetab-ai.desktop AppDir/usr/share/applications/
-            ln -sf usr/bin/CodeTab-AI AppDir/AppRun
+          if [ -f assets/icon.png ]; then
+            cp assets/icon.png AppDir/codetab-ai.png
+            cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png
+          else
+            python3 -c "
+          import struct, zlib
+          def png(path):
+            def c(t,d): return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+            s=256; row=b'\x00'+bytes([30,30,46]*s)
+            open(path,'wb').write(b'\x89PNG\r\n\x1a\n'+c(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+c(b'IDAT',zlib.compress(row*s))+c(b'IEND',b''))
+          png('AppDir/codetab-ai.png')
+          png('AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png')
+          "
+          fi
 
-            if [ -f assets/icon.png ]; then
-              cp assets/icon.png AppDir/codetab-ai.png
-              cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png
-            else
-              python3 -c "
-            import struct, zlib
-            def png(path):
-              def c(t,d): return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
-              s=256; row=b'\x00'+bytes([30,30,46]*s)
-              open(path,'wb').write(b'\x89PNG\r\n\x1a\n'+c(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+c(b'IDAT',zlib.compress(row*s))+c(b'IEND',b''))
-            png('AppDir/codetab-ai.png')
-            png('AppDir/usr/share/icons/hicolor/256x256/apps/codetab-ai.png')
-            "
-            fi
+      - name: appimagetool indir (aarch64)
+        run: |
+          sudo apt-get install -y libfuse2
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage \
+            -O /usr/local/bin/appimagetool-aarch64
+          chmod +x /usr/local/bin/appimagetool-aarch64
 
-            ARCH=aarch64 APPIMAGE_EXTRACT_AND_RUN=1 appimagetool AppDir CodeTab-AI-aarch64.AppImage
+      - name: AppImage paketle (host QEMU ile)
+        run: |
+          ARCH=aarch64 APPIMAGE_EXTRACT_AND_RUN=1 \
+            qemu-aarch64-static /usr/local/bin/appimagetool-aarch64 \
+            AppDir CodeTab-AI-aarch64.AppImage
 
       - uses: actions/upload-artifact@v4
         with:
           name: CodeTab-AI-aarch64
-          path: ${{ github.workspace }}/CodeTab-AI-aarch64.AppImage
+          path: CodeTab-AI-aarch64.AppImage
 
 
   release:
