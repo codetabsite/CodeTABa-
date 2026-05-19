@@ -1,19 +1,45 @@
 import os
 import sys
+import json
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import google.generativeai as genai
 
 SYSTEM_PROMPT = """Sen CodeTab AI'sın. Teknofest projesi için geliştirilmiş bir yapay zeka asistanısın.
-Yalnızca şu konularda yardım ediyorsun ancak yinede farklı konulara cevap ver:
+Her konuda yardım edebilirsin:
 - Linux komutları ve terminal kullanımı
 - Matematik (asal sayı, EBOB, EKOK, denklemler, algoritmalar)
 - Programlama Dilleri
-- Ders Konuları( Turkce, Almanca, Sosyal Bilgiler, Fen, Kimya, Din, Felesefe, Geometri vb)
+- Ders Konuları (Türkçe, Almanca, Sosyal Bilgiler, Fen, Kimya, Din, Felsefe, Geometri vb)
+- Genel sohbet ve günlük sorular
 
-Cevaplarını Türkçe ver. Kısa, net ve örnekli açıklamalar yap.
-Konu dışı sorulara 'Farklı bir konuya gecebilirsin' de.Ancak hafif basit bir cevap ver"""
+Cevaplarını Türkçe ver. Kısa, net ve örnekli açıklamalar yap."""
+
+HISTORY_FILE = Path.home() / ".config" / "codetab" / "history.json"
+
+
+def load_history() -> list:
+    try:
+        if HISTORY_FILE.exists():
+            data = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            return data if isinstance(data, list) else []
+    except Exception:
+        pass
+    return []
+
+
+def save_history(history: list) -> None:
+    try:
+        HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        # Sadece son 50 mesajı sakla
+        HISTORY_FILE.write_text(
+            json.dumps(history[-50:], ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+    except Exception:
+        pass
 
 
 class CodeTabModel:
@@ -27,11 +53,12 @@ class CodeTabModel:
             )
         genai.configure(api_key=api_key)
         self.model_name = "gemini-2.5-flash"
-        self.history = []
+        # Hafızayı dosyadan yükle
+        self.history = load_history()
 
-    def ask(self, question: str, max_tokens: int = 512) -> str:
+    def ask(self, question: str, max_tokens: int = 1024) -> str:
         self.history.append({"role": "user", "parts": [question]})
-        recent = self.history[-10:]
+        recent = self.history[-20:]
 
         model = genai.GenerativeModel(
             model_name=self.model_name,
@@ -48,7 +75,10 @@ class CodeTabModel:
 
         answer = response.text.strip()
         self.history.append({"role": "model", "parts": [answer]})
+        # Her cevaptan sonra diske kaydet
+        save_history(self.history)
         return answer
 
     def gecmisi_temizle(self):
         self.history = []
+        save_history([])
