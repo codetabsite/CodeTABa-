@@ -6,7 +6,7 @@ from ui.api_key_dialog import ApiKeyDialog, load_api_key
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("CodeTab AI")
+    app.setApplicationName("CodeTab AI") #uygulama ismo
 
     if not load_api_key():
         dialog = ApiKeyDialog(first_run=True)
