@@ -52,7 +52,7 @@ class CodeTabModel:
                 "Uygulamayı yeniden başlatın ve API key girin."
             )
         genai.configure(api_key=api_key)
-        self.model_name = "gemini-2.5-flash"
+        self.model_name = "gemini-2.5-flash-lite"
         # Hafızayı dosyadan yükle
         self.history = load_history()
 
