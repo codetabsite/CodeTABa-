@@ -1,4 +1,4 @@
-# ⚡ CodeTab AI — Teknofest (Gemini API Sürümü)
+# ⚡ CodeTab AI — Teknofest 
 
 Raspberry Pi 3B dahil tüm cihazlarda hızlı yanıt verir.  
 **Model:** Gemini 2.5 Flash — günde 250 ücretsiz istek.
