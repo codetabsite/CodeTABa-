@@ -1,7 +1,7 @@
 # ⚡ CodeTab AI — Teknofest 
 
 Raspberry Pi 3B dahil tüm cihazlarda hızlı yanıt verir.  
-**Model:** Gemini 2.5 Flash — günde 250 ücretsiz istek.
+**Model:** Gemini 2.5 Flash-Lite — günde 1000 ücretsiz istek.
 
 ## 🚀 Kurulum
 
@@ -14,7 +14,8 @@ pip3 install -r requirements.txt
 # 3. Başlat (key otomatik sorulur)
 ./baslat.sh
 ```
-Yada APPIMAGE Yükleyin
+Yada APPIMAGE Yükleyin (API GEREKLI)
+APP IMAGE CALISMAZ ISE .DEB DOSYASINI YUKLEYİN(DEBIAN LAZIM)
 
 ## 🔑 Gemini API Key Alma
 1. [aistudio.google.com](https://aistudio.google.com) → Sign In (Google hesabı)
@@ -28,8 +29,7 @@ CodeTABai/
 ├── baslat.sh        ← Bunu çalıştır!
 ├── requirements.txt
 ├── ai/model.py      ← Gemini API
-└── ui/mainwindow.py ← PyQt5 arayüz
-```
+└── ui/mainwindow.py 
 
 ## 📊 Ücretsiz Limitler
 | Model | Günlük | Dakika |
