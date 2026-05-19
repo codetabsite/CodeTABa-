@@ -26,7 +26,7 @@ class CodeTabModel:
                 "Uygulamayı yeniden başlatın ve API key girin."
             )
         genai.configure(api_key=api_key)
-        self.model_name = "gemini-2.5-flash-preview-05-20"
+        self.model_name = "gemini-2.5-flash"
         self.history = []
 
     def ask(self, question: str, max_tokens: int = 512) -> str:
