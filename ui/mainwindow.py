@@ -3,7 +3,7 @@ import subprocess
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTextEdit, QLineEdit, QPushButton, QComboBox,
-    QLabel, QFrame, QStatusBar, QMessageBox
+    QLabel, QFrame, QStatusBar, QMessageBox, QScrollArea
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCursor
@@ -154,6 +154,7 @@ class MainWindow(QMainWindow):
         topic_lbl.setStyleSheet("color: #8b949e; font-size: 12px;")
         self.topic_combo = QComboBox()
         self.topic_combo.addItems([
+            " Genel Sohbet",
             " Linux Komutları",
             " Matematik",
             " Kodlama",
@@ -180,8 +181,11 @@ class MainWindow(QMainWindow):
         topic_row.addWidget(self.apikey_btn)
         layout.addLayout(topic_row)
 
+        # Chat alanı — word wrap açık, scroll otomatik
         self.chat = QTextEdit()
         self.chat.setReadOnly(True)
+        self.chat.setWordWrapMode(3)  # WrapAtWordBoundaryOrAnywhere
+        self.chat.setLineWrapMode(QTextEdit.WidgetWidth)
         layout.addWidget(self.chat, 1)
 
         self.terminal = QTextEdit()
@@ -205,12 +209,30 @@ class MainWindow(QMainWindow):
         input_row.addWidget(self.send_btn)
         layout.addLayout(input_row)
 
-        self.statusBar().showMessage("Groq API'ye bağlanılıyor...")
+        self.statusBar().showMessage("Gemini API'ye bağlanılıyor...")
 
         self._msg("CodeTab AI",
             "Merhaba! Ben CodeTab AI \n"
-            "Linux komutları, dersler ve kodlama konularında yardımcı olabilirim.\n"
+            "Linux komutları, dersler, kodlama ve genel sohbet konularında yardımcı olabilirim.\n"
             "Sorunuzu yazın ve Enter'a basın", ai=True)
+
+        # Kayıtlı geçmişi göster
+        self._show_saved_history()
+
+    def _show_saved_history(self):
+        """Önceki oturumdan kalan sohbeti ekrana yükle"""
+        from ai.model import load_history
+        history = load_history()
+        if not history:
+            return
+        self._msg("💾 Sistem", f"Önceki sohbet yüklendi ({len(history)//2} mesaj)", ai=True)
+        for item in history[-20:]:  # Son 20 mesajı göster
+            role = item.get("role", "")
+            text = item.get("parts", [""])[0] if item.get("parts") else ""
+            if role == "user":
+                self._msg("Sen", text, ai=False)
+            elif role == "model":
+                self._msg("CodeTab AI", text, ai=True)
 
     def _load_model(self):
         self.loader = ModelLoader()
@@ -220,17 +242,17 @@ class MainWindow(QMainWindow):
 
     def _on_ready(self, model):
         self.model = model
-        self.status_dot.setText("Groq API Bağlı")
+        self.status_dot.setText("Gemini Bağlı")
         self.status_dot.setStyleSheet("color: #3fb950; font-size: 12px;")
         self.send_btn.setEnabled(True)
-        self.statusBar().showMessage("Hazır — Llama3 70B aktif")
+        self.statusBar().showMessage("Hazır — Gemini 2.5 Flash aktif")
 
     def _on_fail(self, err):
         self.status_dot.setText("Bağlantı Hatası")
         self.status_dot.setStyleSheet("color: #f85149; font-size: 12px;")
         self.statusBar().showMessage(f"Hata: {err}")
         QMessageBox.warning(self, "API Hatası",
-            f"{err}\n\nTerminalde şunu çalıştır:\nexport GROQ_API_KEY='gsk_...'")
+            f"{err}\n\nTerminalde şunu çalıştır:\nexport GEMINI_API_KEY='AIza...'")
 
     def _send(self):
         question = self.input.text().strip()
@@ -278,11 +300,22 @@ class MainWindow(QMainWindow):
     def _msg(self, sender, text, ai=True):
         color = "#58a6ff" if ai else "#3fb950"
         icon  = "🤖" if ai else "👤"
-        text  = text.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
-        html  = (f"<div style='margin:6px 0'>"
-                 f"<b style='color:{color}'>{icon} {sender}</b><br>"
-                 f"<span style='white-space:pre-wrap;color:#e6edf3'>{text}</span>"
-                 f"</div><hr style='border:none;border-top:1px solid #21262d'>")
+        # HTML karakterlerini escape et
+        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        html = (
+            f"<div style='margin:8px 0; padding:4px 0'>"
+            f"<b style='color:{color}'>{icon} {sender}</b><br>"
+            f"<span style='"
+            f"white-space:pre-wrap;"
+            f"word-wrap:break-word;"
+            f"overflow-wrap:break-word;"
+            f"color:#e6edf3;"
+            f"display:block;"
+            f"max-width:100%"
+            f"'>{text}</span>"
+            f"</div>"
+            f"<hr style='border:none;border-top:1px solid #21262d;margin:2px 0'>"
+        )
         self.chat.append(html)
         c = self.chat.textCursor()
         c.movePosition(QTextCursor.End)
@@ -293,11 +326,13 @@ class MainWindow(QMainWindow):
         self.terminal.clear()
         if self.model:
             self.model.gecmisi_temizle()
+        self._msg("CodeTab AI",
+            "Sohbet temizlendi. Yeni bir konuya başlayabiliriz!", ai=True)
 
     def _toggle_terminal(self):
         v = not self.terminal.isVisible()
         self.terminal.setVisible(v)
-        self.terminal_btn.setText("💻 Terminal Gizle" if v else "💻 Terminal")
+        self.terminal_btn.setText("Terminal Gizle" if v else "Terminal")
 
     def _change_api_key(self):
         dialog = ApiKeyDialog(self, first_run=False)
