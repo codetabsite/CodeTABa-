@@ -53,7 +53,7 @@ class ApiKeyDialog(QDialog):
         layout.setSpacing(14)
         layout.setContentsMargins(24, 20, 24, 20)
 
-        title = QLabel("⚡ CodeTab AI")
+        title = QLabel(" CodeTab AI")
         title.setFont(QFont("Arial", 18, QFont.Bold))
         title.setStyleSheet("color: #58a6ff;")
         layout.addWidget(title)
@@ -80,7 +80,7 @@ class ApiKeyDialog(QDialog):
         self.key_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.key_input)
 
-        self.show_btn = QPushButton("👁 Göster")
+        self.show_btn = QPushButton(" Göster")
         self.show_btn.setObjectName("secondary")
         self.show_btn.setFixedWidth(90)
         self.show_btn.clicked.connect(self._toggle_echo)
@@ -140,10 +140,10 @@ class ApiKeyDialog(QDialog):
     def _toggle_echo(self):
         if self.key_input.echoMode() == QLineEdit.Password:
             self.key_input.setEchoMode(QLineEdit.Normal)
-            self.show_btn.setText("🙈 Gizle")
+            self.show_btn.setText(" Gizle")
         else:
             self.key_input.setEchoMode(QLineEdit.Password)
-            self.show_btn.setText("👁 Göster")
+            self.show_btn.setText(" Göster")
 
     def _save(self):
         key = self.key_input.text().strip()
