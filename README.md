@@ -13,6 +13,7 @@ pip3 install -r requirements.txt
 # 3. Başlat (key otomatik sorulur)
 ./baslat.sh
 ```
+Yada APPIMAGE Yükleyin 
 
 ## 🔑 Groq API Key Alma
 1. groq.com → Sign Up (ücretsiz)
