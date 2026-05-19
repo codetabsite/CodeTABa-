@@ -6,14 +6,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from groq import Groq
 
 SYSTEM_PROMPT = """Sen CodeTab AI'sın. Teknofest projesi için geliştirilmiş bir yapay zeka asistanısın.
-Yalnızca şu konularda yardım ediyorsun:
+Yalnızca şu konularda yardım ediyorsun ancak yinede farklı konulara cevap ver:
 - Linux komutları ve terminal kullanımı
 - Matematik (asal sayı, EBOB, EKOK, denklemler, algoritmalar)
-- Python programlama
-- C++ programlama
+- Programlama Dilleri
+- Ders Konuları( Turkce, Almanca, Sosyal Bilgiler, Fen, Kimya, Din, Felesefe, Geometri vb)
 
 Cevaplarını Türkçe ver. Kısa, net ve örnekli açıklamalar yap.
-Konu dışı sorulara 'Bu konuda yardımcı olamam, Linux, Matematik veya Kodlama soruları sorabilirsin.' de."""
+Konu dışı sorulara 'Farklı bir konuya gecebilirsin' de.Ancak hafif basit bir cevap ver"""
 
 
 class CodeTabModel:
