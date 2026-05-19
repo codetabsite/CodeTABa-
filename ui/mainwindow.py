@@ -44,7 +44,7 @@ class ModelLoader(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CodeTab AI ⚡ — Teknofest")
+        self.setWindowTitle("CodeTab AI ")
         self.setMinimumSize(900, 620)
         self.model = None
         self._apply_style()
@@ -129,11 +129,11 @@ class MainWindow(QMainWindow):
         header = QHBoxLayout()
         left = QVBoxLayout()
 
-        title = QLabel("⚡ CodeTab AI")
+        title = QLabel("CodeTab AI")
         title.setFont(QFont("Arial", 20, QFont.Bold))
         title.setStyleSheet("color: #58a6ff;")
 
-        subtitle = QLabel("Linux Komutları  •  Matematik  •  Python / C++  |  Teknofest")
+        subtitle = QLabel("CodeTab AI Teknofest")
         subtitle.setStyleSheet("color: #8b949e; font-size: 11px;")
 
         left.addWidget(title)
@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         header.addLayout(left)
         header.addStretch()
 
-        self.status_dot = QLabel("⏳ Bağlanıyor...")
+        self.status_dot = QLabel(" Bağlanıyor...")
         self.status_dot.setStyleSheet("color: #d29922; font-size: 12px;")
         header.addWidget(self.status_dot)
         layout.addLayout(header)
@@ -154,24 +154,24 @@ class MainWindow(QMainWindow):
         topic_lbl.setStyleSheet("color: #8b949e; font-size: 12px;")
         self.topic_combo = QComboBox()
         self.topic_combo.addItems([
-            "🐧  Linux Komutları",
-            "📐  Matematik",
-            "🐍  Python Kodlama",
-            "⚙️   C++ Kodlama",
+            " Linux Komutları",
+            " Matematik",
+            " Kodlama",
+            " Ders Konuları",
         ])
         topic_row.addWidget(topic_lbl)
         topic_row.addWidget(self.topic_combo)
         topic_row.addStretch()
 
-        self.terminal_btn = QPushButton("💻 Terminal")
+        self.terminal_btn = QPushButton("Terminal")
         self.terminal_btn.setObjectName("secondary")
         self.terminal_btn.clicked.connect(self._toggle_terminal)
 
-        self.clear_btn = QPushButton("🗑 Temizle")
+        self.clear_btn = QPushButton("Temizle")
         self.clear_btn.setObjectName("secondary")
         self.clear_btn.clicked.connect(self._clear)
 
-        self.apikey_btn = QPushButton("🔑 API Key")
+        self.apikey_btn = QPushButton("API Key")
         self.apikey_btn.setObjectName("secondary")
         self.apikey_btn.clicked.connect(self._change_api_key)
 
@@ -193,7 +193,7 @@ class MainWindow(QMainWindow):
 
         input_row = QHBoxLayout()
         self.input = QLineEdit()
-        self.input.setPlaceholderText("Sorunuzu yazın...")
+        self.input.setPlaceholderText("Sor...")
         self.input.returnPressed.connect(self._send)
 
         self.send_btn = QPushButton("Gönder ➤")
@@ -208,9 +208,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Groq API'ye bağlanılıyor...")
 
         self._msg("CodeTab AI",
-            "Merhaba! Ben CodeTab AI 🤖\n"
-            "Linux komutları, matematik ve kodlama konularında yardımcı olabilirim.\n"
-            "Sorunuzu yazın ve Enter'a basın!", ai=True)
+            "Merhaba! Ben CodeTab AI \n"
+            "Linux komutları, dersler ve kodlama konularında yardımcı olabilirim.\n"
+            "Sorunuzu yazın ve Enter'a basın", ai=True)
 
     def _load_model(self):
         self.loader = ModelLoader()
@@ -220,13 +220,13 @@ class MainWindow(QMainWindow):
 
     def _on_ready(self, model):
         self.model = model
-        self.status_dot.setText("🟢 Groq API Bağlı")
+        self.status_dot.setText("Groq API Bağlı")
         self.status_dot.setStyleSheet("color: #3fb950; font-size: 12px;")
         self.send_btn.setEnabled(True)
         self.statusBar().showMessage("Hazır — Llama3 70B aktif")
 
     def _on_fail(self, err):
-        self.status_dot.setText("🔴 Bağlantı Hatası")
+        self.status_dot.setText("Bağlantı Hatası")
         self.status_dot.setStyleSheet("color: #f85149; font-size: 12px;")
         self.statusBar().showMessage(f"Hata: {err}")
         QMessageBox.warning(self, "API Hatası",
@@ -241,7 +241,7 @@ class MainWindow(QMainWindow):
         self._msg("Sen", question, ai=False)
         self.input.clear()
         self.send_btn.setEnabled(False)
-        self.statusBar().showMessage("⏳ Yanıt üretiliyor...")
+        self.statusBar().showMessage(" Yanıt üretiliyor...")
 
         if "Linux" in topic and self._linux_komutu_mu(question):
             self._terminalde_calistir(question)
@@ -304,6 +304,6 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == dialog.Accepted:
             self.model = None
             self.send_btn.setEnabled(False)
-            self.status_dot.setText("⏳ Yeniden bağlanıyor...")
+            self.status_dot.setText("Yeniden bağlanıyor...")
             self.status_dot.setStyleSheet("color: #d29922; font-size: 12px;")
             self._load_model()
