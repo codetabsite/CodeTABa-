@@ -1,7 +1,7 @@
 #  CodeTab AI — Teknofest 
 
 Raspberry Pi 3B dahil tüm cihazlarda hızlı yanıt verir.  
-**Model:** Gemini 2.5 Flash-Lite — günde 1000 ücretsiz istek.
+**Model:** Gemini 2.5 Flash-Lite — günde 1000 ücretsiz istek.Mimo-Ai Tabanlı 
 
 ## Kurulum
 
